@@ -1,4 +1,4 @@
-### Lab - Neural Encoding for Text Classification
+# Lab - Neural Encoding for Text Classification
 
 #### Introduction 
 
