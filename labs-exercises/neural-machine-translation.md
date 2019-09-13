@@ -8,7 +8,7 @@ Translation and will implement the attention mechanism.
 
 ## Requirements
 We will train our models on the Multi30k dataset (well just a small part of it, as we will be 
-running things on your laptop; you are more than welcome to try out the full datset on a GPU-enabled machine too!).
+running things on your laptop; you are more than welcome to try out the full dataset on a GPU-enabled machine too!).
 
 1. Clone the dataset from [here](https://github.com/multi30k/dataset). 
 2. Extract the first 1000 examples of the already tokenized version of the validation set: 
@@ -24,7 +24,7 @@ There are placeholders in the code that are left empty for you to fill in. We ar
 a dataset reader for Multi30k: ``athnlp/readers/multi30k_reader.py``. 
 
 **Note**: We recommend that
-you train and predict withthe built-in commands using ``allennlp train/predict``. If you
+you train and predict with the built-in commands using ``allennlp train/predict``. If you
 need to debug your code you can programmatically execute the training process from: ``athnlp/nmt.py``
 We will be reporting performance using [BLEU](https://www.aclweb.org/anthology/P02-1040).   
 

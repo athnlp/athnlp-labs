@@ -28,7 +28,8 @@ that you can *activate* using the following command: `conda activate athnlp`. Re
 running the scripts in this repository.
 
 We provide a script that will help you setup your environment. Run the command: `sh setup_dependencies.sh` and 
-it will automatically install the project dependencies for you.
+it will automatically install the project dependencies for you. The script will download several data dependencies that might
+require some time to be installed. 
 
 
 **Note**: Installing AllenNLP on Mac OS can be tricky; check [here](https://stackoverflow.com/questions/52509602/cant-compile-c-program-on-a-mac-after-upgrade-to-mojave)

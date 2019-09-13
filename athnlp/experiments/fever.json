@@ -1,0 +1,61 @@
+{
+  "dataset_reader": {
+    "type": "feverlite",
+    "token_indexers": {
+      "tokens": {
+        "type": "single_id",
+        "lowercase_tokens": true
+      }
+    },
+    "wiki_tokenizer": {
+      "type":"word",
+      "word_splitter": {
+        "type": "just_spaces"
+      }
+    },
+    "claim_tokenizer": {
+      "type":"word",
+      "word_splitter": {
+        "type": "simple"
+      }
+    }
+  },
+  "train_data_path": "data/fever/train.jsonl",
+  "validation_data_path": "data/fever/validation.jsonl",
+  "model": {
+    "type": "fever",
+    "text_field_embedder": {
+      "tokens": {
+        "type": "embedding",
+        "pretrained_file": "resources/glove.6B.50d.txt.gz",
+        "embedding_dim": 50,
+        "trainable": false
+      }
+    },
+    "final_feedforward": {
+      "input_dim": 100,
+      "num_layers": 3,
+      "hidden_dims": [100, 100, 2],
+      "activations": ["relu","relu","linear"],
+      "dropout": 0.0
+    },
+    "initializer": [
+      [".*linear_layers.*weight", {"type": "xavier_normal"}]
+     ]
+  },
+  "iterator": {
+    "type": "bucket",
+    "sorting_keys": [["claim", "num_tokens"], ["evidence", "num_tokens"]],
+    "batch_size": 32
+  },
+  "trainer": {
+    "num_epochs": 20,
+    "cuda_device": -1,
+    "validation_metric": "+accuracy",
+    "optimizer": {
+      "type": "sgd",
+      "lr": 0.01
+
+    }
+  }
+}

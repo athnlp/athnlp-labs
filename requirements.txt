@@ -1,3 +1,5 @@
 nltk
 allennlp
 numpy
+ipykernel
+pytorch-transformers
