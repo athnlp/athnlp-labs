@@ -41,23 +41,6 @@ class BertSquadReader(DatasetReader):
         self.doc_stride= doc_stride
         self.question_length_limit = question_length_limit
 
-    # def _read(self, file_path: str):
-    #     #            2   3    4   3     5     6   8      9    2   14   12
-    #     # sentence1 = "who is the quickest? [SEP] the quickest quick brown fox jumped over the lazy dog"
-    #     sentence1 = "Who was the duke in the battle of Hastings? [SEP] The Normans (Norman: Nourmands; French: Normands; Latin: Normanni) were the people who in the 10th and 11th centuries gave their name to Normandy, a region in France. They were descended from Norse (\"Norman\" comes from \"Norseman\") raiders and pirates from Denmark, Iceland and Norway who, under their leader Rollo, agreed to swear fealty to King Charles III of West Francia. Through generations of assimilation and mixing with the native Frankish and Roman-Gaulish populations, their descendants would gradually merge with the Carolingian-based cultures of West Francia. The distinct cultural and ethnic identity of the Normans emerged initially in the first half of the 10th century, and it continued to evolve over the succeeding centuries. The Norman dynasty had a major political, cultural and military impact on medieval Europe and even the Near East. The Normans were famed for their martial spirit and eventually for their Christian piety, becoming exponents of the Catholic orthodoxy into which they assimilated. They adopted the Gallo-Romance language of the Frankish land they settled, their dialect becoming known as Norman, Normaund or Norman French, an important literary language. The Duchy of Normandy, which they formed by treaty with the French crown, was a great fief of medieval France, and under Richard I of Normandy was forged into a cohesive and formidable principality in feudal tenure. The Normans are noted both for their culture, such as their unique Romanesque architecture and musical traditions, and for their significant military accomplishments and innovations. Norman adventurers founded the Kingdom of Sicily under Roger II after conquering southern Italy on the Saracens and Byzantines, and an expedition on behalf of their duke, William the Conqueror, led to the Norman conquest of England at the Battle of Hastings in 1066. Norman cultural and military influence spread from these new European centres to the Crusader states of the Near East, where their prince Bohemond I founded the Principality of Antioch in the Levant, to Scotland and Wales in Great Britain, to Ireland, and to the coasts of north Africa and the Canary Islands. Computational complexity theory is a branch of the theory of computation in theoretical computer science that focuses on classifying computational problems according to their inherent difficulty, and relating those classes to each other. A computational problem is understood to be a task that is in principle amenable to being solved by a computer, which is equivalent to stating that the problem may be solved by mechanical application of mathematical steps, such as an algorithm. The Normans (Norman: Nourmands; French: Normands; Latin: Normanni) were the people who in the 10th and 11th centuries gave their name to Normandy, a region in France. They were descended from Norse (\"Norman\" comes from \"Norseman\") raiders and pirates from Denmark, Iceland and Norway who, under their leader Rollo, agreed to swear fealty to King Charles III of West Francia. Through generations of assimilation and mixing with the native Frankish and Roman-Gaulish populations, their descendants would gradually merge with the Carolingian-based cultures of West Francia. The distinct cultural and ethnic identity of the Normans emerged initially in the first half of the 10th century, and it continued to evolve over the succeeding centuries. The Norman dynasty had a major political, cultural and military impact on medieval Europe and even the Near East. The Normans were famed for their martial spirit and eventually for their Christian piety, becoming exponents of the Catholic orthodoxy into which they assimilated. They adopted the Gallo-Romance language of the Frankish land they settled, their dialect becoming known as Norman, Normaund or Norman French, an important literary language. The Duchy of Normandy, which they formed by treaty with the French crown, was a great fief of medieval France, and under Richard I of Normandy was forged into a cohesive and formidable principality in feudal tenure. The Normans are noted both for their culture, such as their unique Romanesque architecture and musical traditions, and for their significant military accomplishments and innovations. Norman adventurers founded the Kingdom of Sicily under Roger II after conquering southern Italy on the Saracens and Byzantines, and an expedition on behalf of their duke, William the Conqueror, led to the Norman conquest of England at the Battle of Hastings in 1066. Norman cultural and military influence spread from these new European centres to the Crusader states of the Near East, where their prince Bohemond I founded the Principality of Antioch in the Levant, to Scotland and Wales in Great Britain, to Ireland, and to the coasts of north Africa and the Canary Islands. Computational complexity theory is a branch of the theory of computation in theoretical computer science that focuses on classifying computational problems according to their inherent difficulty, and relating those classes to each other. A computational problem is understood to be a task that is in principle amenable to being solved by a computer, which is equivalent to stating that the problem may be solved by mechanical application of mathematical steps, such as an algorithm."
-    #     tokens1 = self._tokenizer.tokenize(sentence1)
-    #     label1 = "positive"
-    #
-    #     #            2   3     5     6   8      9    2  15 10 11 14   1
-    #     sentence2 = "the quick brown fox jumped over the laziest lazy elmo"
-    #     tokens2 = self._tokenizer.tokenize(sentence2)
-    #     label2 = "negative"
-    #
-    #     instance1 = Instance({"tokens": TextField(tokens1, self._token_indexers)})
-    #     instance2 = Instance({"tokens": TextField(tokens2, self._token_indexers)})
-    #
-    #     return [instance1]
-
     def _read(self, file_path: str):
         """Read a SQuAD json file into a list of SquadExample."""
         with open(file_path, "r", encoding='utf-8') as reader:
@@ -210,23 +193,6 @@ class BertSquadReader(DatasetReader):
                         # SEP token
                         tokens.append(Token(sep_token))
                         # p_mask.append(1)
-
-                        # input_ids = self._tokenizer.convert_tokens_to_ids(tokens)
-                        #
-                        # # The mask has 1 for real tokens and 0 for padding tokens. Only real
-                        # # tokens are attended to.
-                        # input_mask = [1 if mask_padding_with_zero else 0] * len(input_ids)
-                        #
-                        # # Zero-pad up to the sequence length.
-                        # while len(input_ids) < self.max_sequence_length:
-                        #     input_ids.append(pad_token)
-                        #     input_mask.append(0 if mask_padding_with_zero else 1)
-                        #     segment_ids.append(pad_token_segment_id)
-                        #     p_mask.append(1)
-                        #
-                        # assert len(input_ids) == self.max_sequence_length
-                        # assert len(input_mask) == self.max_sequence_length
-                        # assert len(segment_ids) == self.max_sequence_length
 
                         span_is_impossible = is_impossible
                         start_position = None

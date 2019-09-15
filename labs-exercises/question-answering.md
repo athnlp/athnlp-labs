@@ -33,12 +33,17 @@ The Normans (Norman: Nourmands; French: Normands; Latin: Normanni) were the peop
 We will encode the question and the paragraph following the BERT encoder scheme:
 
 ```
-[CLS] In what country is Normandy located? [SEP] The Normans (Norman: Nourmands; French: Normands; Latin: Normanni) were the people who in the 10th and 11th centuries (...)
+[CLS] in what country is normandy located ? [SEP] the norman ##s ( norman : no ##ur ##man ##ds ; french : norman ##ds ; latin : norman ##ni ) were the people who in the 10th and 11th centuries (...)'
+
 ```
 
 More details about this fine-tuning procedure and the BERT encoding scheme can be found in the original paper from [Devlin et. al 2018](https://arxiv.org/pdf/1810.04805.pdf). 
 We created an AllenNLP dataset reader that is able to process the SQuAD dataset examples and format them following
 BERT encoding scheme. 
+
+**Note**: BERT by default performs word-piece tokenization. See how words like ``normans`` gets split to ``norman ##s``, 
+and ``nourmands`` gets split to more than two wordpieces: ``no ##ur ##man ##ds``. 
+The dataset reader provided takes care of that.
 
 #### 1. Span prediction for Question Answering
 
@@ -66,7 +71,7 @@ that we created (see [config.json](resources/bert-base-uncased/config.json) for 
     further processed by a Linear layer and a Tanh activation function. The Linear
     layer weights are trained from the next sentence prediction (classification)
     objective during Bert pretraining. ``torch.FloatTensor`` of shape ``(batch_size, hidden_size)``
-- **attentions**: Attentions weights after the attention softmax, used to compute the weighted average in the self-attention heads.
+- **attentions**: Attention weights after the attention softmax, used to compute the weighted average in the self-attention heads.
 List of ``torch.FloatTensor`` (one for each layer) of shape ``(batch_size, num_heads, sequence_length, sequence_length)``
 
 Given the output of the BERT model, it is possible to use two different strategies to predict the answer span:
