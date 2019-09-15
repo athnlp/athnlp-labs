@@ -24,22 +24,22 @@
     "model": {
         "type": "qa_bert",
         "bert_model": "resources/bert-base-uncased/",
-        "dropout": 0.3
+        "dropout": 0.1
     },
     "iterator": {
         "type": "bucket",
         "sorting_keys": [["tokens", "num_tokens"]],
-        "batch_size": 5
+        "batch_size": 2
     },
     "trainer": {
         "optimizer": {
             "type": "adam",
-            "lr": 0.001
+            "lr": 0.0001
         },
-        "validation_metric": "+em",
+        "validation_metric": "+f1",
         "num_serialized_models_to_keep": 1,
-        "num_epochs": 10,
-        "grad_norm": 10.0,
+        "num_epochs": 3,
+        "grad_norm": 1.0,
         "patience": 5,
         "cuda_device": -1
     }
