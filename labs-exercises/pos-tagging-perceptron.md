@@ -43,8 +43,9 @@ the weight vectors** calculated for each label. Does that help?
 
 #### 2. Feature Engineering
 
-- Implement two different types beyond bag-of-words. *Hint*: One very common feature type is to 
-introduce some local context for every word via **n-grams**, usually with n=2,3. 
+- Implement different types beyond bag-of-words. *Hint*: One very common feature type is to 
+introduce some local context for every word via **n-grams**, usually with n=2,3. Another is to
+look at the previous/next **word** (not **tag**; why?). 
 - (Bonus) What are the most **positively-weighted** features for each label? Give the
 top 10 for each class and comment on whether they make sense (if they
 don’t you might have a bug!).
