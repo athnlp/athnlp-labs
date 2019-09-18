@@ -1,5 +1,5 @@
 nltk
-allennlp
+allennlp==0.8.5
 numpy
 ipykernel
-pytorch-transformers
+pytorch-transformers==1.1.0
