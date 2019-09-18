@@ -137,5 +137,6 @@ If you are using `pdb`, you will have to write a simple 2-line wrapper script: s
 Experiment with the number and the size of hidden layers to find the best settings using the train/dev set and assess your accuracy on the test set.
 2. Look at the distribution of training data. How does balancing the number of `SUPPORTED` and `REFUTED` training instances affect the model accuracy? (hint, you may have to create a new dataset reader)
 3. Compare against a discrete feature baseline, i.e., using one-hot vectors or hand-crafted features instead of word embeddings to represent the words?
-4. Take a look at the training/dev data. Can you design claims that would "fool" your models? You can see this report ([Thorne and Vlachos, 2019](https://arxiv.org/abs/1903.05543)) for inspiration. 
+4. Implement a _[hypothesis only](https://www.aclweb.org/anthology/S18-2023)_ version of the model that ignores the evidence and only uses the claim for predicting the label. What accuracy does this model get? Why do you think this?
+5. Take a look at the training/dev data. Can you design claims that would "fool" your models? You can see this report ([Thorne and Vlachos, 2019](https://arxiv.org/abs/1903.05543)) for inspiration. 
 What do you conclude about the ability of your model to understand language?
