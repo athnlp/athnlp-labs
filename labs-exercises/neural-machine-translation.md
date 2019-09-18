@@ -73,8 +73,8 @@ feeding as in input to the decoder RNN, try concatenating it to the output hidde
 (i.e., *after* the RNN). Does that effect any change? (**Note**: you might need to train on the original corpus). 
     
 #### 3. (Bonus) Sampling during decoding
-Implement a sampling algorithm for your decoder. Asn alternative heuristic to beam search during decoding, 
-the idea is to *sample* from the vocobulary distribution instead of taking the ``arg,max`` at each time step.
+Implement a sampling algorithm for your decoder. As an alternative heuristic to beam search during decoding, 
+the idea is to *sample* from the vocobulary distribution instead of taking the ``arg_max`` at each time step.
 
 Things to try out:
 
