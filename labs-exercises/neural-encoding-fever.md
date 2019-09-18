@@ -129,6 +129,7 @@ If you are using `pdb`, you will have to write a simple 2-line wrapper script: s
 
 
 ## Exercises
+For the exercises, we have provided a dataset reader (`athnlp/readers/fever_reader.py`), configuration file (`athnlp/experiments/fever.json`), and sample model (`athnlp/models/fever_text_classification.py`). You can complete these exercises by completing the code in the sample model.
 
 1. Implement a model that 
 	- represents the claim and the evidence by averaging their word embeddings;

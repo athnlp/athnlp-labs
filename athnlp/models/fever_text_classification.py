@@ -71,6 +71,8 @@ class FEVERTextClassificationModel(Model):
             A scalar loss to be optimised.
         """
 
+
+        # TODO - Delete this line when you start working on your solution
         raise NotImplementedError("Compute label logits (for supported and refuted) for the given Claim and Evidence input")
 
         # TODO - Uncomment the code below
