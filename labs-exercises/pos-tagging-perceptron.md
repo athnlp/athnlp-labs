@@ -31,7 +31,7 @@ nltk.download('brown')
 #### 1. Perceptron Algorithm
 
 Implement the standard perceptron algorithm. Use the first 10000/1000/1000 sentences for training/dev/test.
-In order to speed up the process for you, we have implemented a simple dataset reader that automatically converts the Brown corpus using the Universal PoS Tagset: `athnlp/reader/brown_pos_corpus.py` (you may use your own implementation if you want; `athnlp/reader/en-brown.map` provides the mapping from Brown to Universal Tagset). 
+In order to speed up the process for you, we have implemented a simple dataset reader that automatically converts the Brown corpus using the Universal PoS Tagset: `athnlp/readers/brown_pos_corpus.py` (you may use your own implementation if you want; `athnlp/reader/en-brown.map` provides the mapping from Brown to Universal Tagset). 
 
 **Important**: Recall that the perceptron has to predict multiple (PoS tags) instead of binary classes:
 ![Multiclass Perceptron](multiclass_perceptron.png)
