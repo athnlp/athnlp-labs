@@ -27,6 +27,12 @@ After the installation is complete, you should have a new virtual environment ca
 that you can *activate* using the following command: `conda activate athnlp`. Remember to execute this command before
 running the scripts in this repository.
 
+Next, you should clone the repository to your computer:
+```
+    git clone https://github.com/athnlp/athnlp-labs
+```
+
+Finally, you should install all required dependencies. 
 We provide a script that will help you setup your environment. Run the command: `sh setup_dependencies.sh` and 
 it will automatically install the project dependencies for you. The script will download several data dependencies that might
 require some time to be installed. 

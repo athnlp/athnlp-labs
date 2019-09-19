@@ -41,7 +41,7 @@ Just execute the following in a Python CLI:
 
 ```python
 import nltk
-nltk.downlad('brown')
+nltk.download('brown')
 ``` 
 
 ## Exercises
