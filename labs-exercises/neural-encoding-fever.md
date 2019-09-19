@@ -131,14 +131,29 @@ If you are using `pdb`, you will have to write a simple 2-line wrapper script: s
 ## Exercises
 For the exercises, we have provided a dataset reader (`athnlp/readers/fever_reader.py`), configuration file (`athnlp/experiments/fever.json`), and sample model (`athnlp/models/fever_text_classification.py`). You can complete these exercises by completing the code in the sample model.
 
+### 1. Average Word Embedding Model
 1. Implement a model that 
 	- represents the claim and the evidence by averaging their word embeddings;
 	- concatenates the two representations;
 	- uses a multilayer perceptron to decide the label.
-Experiment with the number and the size of hidden layers to find the best settings using the train/dev set and assess your accuracy on the test set.
-2. How does fine-tuning the word embeddings affect performance? You can make the word embeddings layer trainable by changing the config file for the `text_field_embedder` in the `fever.json` config file. 
-3. Look at the distribution of training data. How does balancing the number of `SUPPORTED` and `REFUTED` training instances affect the model accuracy? (hint, you may have to create a new dataset reader)
-4. Compare against a discrete feature baseline, i.e., using one-hot vectors or hand-crafted features instead of word embeddings to represent the words?
-5. Implement a _[hypothesis only](https://www.aclweb.org/anthology/S18-2023)_ version of the model that ignores the evidence and only uses the claim for predicting the label. What accuracy does this model get? Why do you think this?
-6. Take a look at the training/dev data. Can you design claims that would "fool" your models? You can see this report ([Thorne and Vlachos, 2019](https://arxiv.org/abs/1903.05543)) for inspiration. 
+
+2. Experiment with the number and the size of hidden layers to find the best settings using the train/dev set and assess your accuracy on the test set. (note: this model may not get high accuracy)
+
+3. Explore: How does fine-tuning the word embeddings affect performance? You can make the word embeddings layer trainable by changing the config file for the `text_field_embedder` in the `fever.json` config file. 
+
+### 2. Discrete Feature Baseline
+1. Compare against a discrete feature baseline, i.e., using one-hot vectors or hand-crafted features instead of word embeddings to represent the words?
+
+### 3. Alternative Pooling Methods
+Averaging word embeddings is an example of Pooling (see slide 110/111 in Ryan McDonald's talk: [SLIDES](https://github.com/athnlp/athnlp-labs/blob/master/slides/McDonald_classification.pdf)).
+
+Try alternative methods for pooling the word embeddings. Which ones make an improvement?
+ 
+1. Replace the averaging of word embeddings with max pooling (taking the max values for each embedding dimension over each word in the sentence).
+
+2. Use a `CnnEncoder()` to generate sentence representations. (hint: you may need to set `"token_min_padding_length": 5` or higher in the `tokens` object in `token_indexers` for large filter sizes). Filter sizes of between 2-5 should be sufficient. More filters will cause training to be slower (perhaps just train for 1 or 2 epochs)
+
+### 4. Hypothesis-Only NLI and Biases
+1. Implement a _[hypothesis only](https://www.aclweb.org/anthology/S18-2023)_ version of the model that ignores the evidence and only uses the claim for predicting the label. What accuracy does this model get? Why do you think this? Think back to slide 7 on Ryan's talk. 
+2. Take a look at the training/dev data. Can you design claims that would "fool" your models? You can see this report ([Thorne and Vlachos, 2019](https://arxiv.org/abs/1903.05543)) for inspiration. 
 What do you conclude about the ability of your model to understand language?
