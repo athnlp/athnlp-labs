@@ -2,4 +2,4 @@ nltk
 allennlp
 numpy
 ipykernel
-pytorch-transformers
+pytorch-transformers==1.1.0
