@@ -41,5 +41,12 @@ require some time to be installed.
 **Note**: Installing AllenNLP on Mac OS can be tricky; check [here](https://stackoverflow.com/questions/52509602/cant-compile-c-program-on-a-mac-after-upgrade-to-mojave)
 for a possible solution.
 
+## Docker
 
+If you prefer (or you are on Windows), you can install Docker and create a Docker image with the following commands:
+- build it by running `docker build -t athnlp - < Dockerfile`
+- get an interactive terminal on the image with `docker run -i -t athnlp bash`
+- run commands as you normally would (remember this is a very minimal linux installation)
+If you want to run the image with a new version of the code, add the option `--no-cache` to the build.
+You need to do the wget commands from setup_dependencies.sh on your own. Make sure you give Docker enough disk space and memory
 
