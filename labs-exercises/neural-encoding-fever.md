@@ -124,9 +124,26 @@ AllenNLP will install itself as a bash script that you can call when you want to
 allennlp train --include-package athnlp --serialization-dir mymodel myconfig.json
 ``` 
 This is an alias that just runs Python with the following command: `python -m allennlp.run [args]`. 
-If you are using an IDE, you can debug AllenNLP models by running the python module `allennlp.run`. 
+If you are using an IDE, you can debug AllenNLP models by running the python module `allennlp.run`. **note: this is running a module. not a script - select the dropdown to select "Module name" NOT "Script path"**
+
+![](data/run_fever.png)
+
 If you are using `pdb`, you will have to write a simple 2-line wrapper script: see `run.py` in the AllenNLP GitHub repo for inspiration. 
 
+### Debugging
+If you encounter this error:
+```
+allennlp.common.checks.ConfigurationError: "feverlite not in acceptable choices for dataset_reader.type: ['ccgbank', 'conll2003', 'conll2000', 'ontonotes_ner', 'coref', 'winobias', 'event2mind', 'interleaving', 'language_modeling', 'multiprocess', 'ptb_trees', 'drop', 'squad', 'quac', 'triviaqa', 'qangaroo', 'srl', 'semantic_dependencies', 'seq2seq', 'sequence_tagging', 'snli', 'universal_dependencies', 'universal_dependencies_multilang', 'sst_tokens', 'quora_paraphrase', 'atis', 'nlvr', 'wikitables', 'template_text2sql', 'grammar_based_text2sql', 'quarel', 'simple_language_modeling', 'babi', 'copynet_seq2seq', 'text_classification_json']"
+```
+Check that `--include-package athnlp` is included in the arguments when calling AllenNLP
+
+
+
+If you encounter this error: 
+```
+ModuleNotFoundError: No module named 'athnlp'
+```
+Check that the athnlp folder is in the `PYTHONPATH`.  
 
 ## Exercises
 For the exercises, we have provided a dataset reader (`athnlp/readers/fever_reader.py`), configuration file (`athnlp/experiments/fever.json`), and sample model (`athnlp/models/fever_text_classification.py`). You can complete these exercises by completing the code in the sample model.
