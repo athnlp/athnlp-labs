@@ -210,7 +210,7 @@ Start by make a new config file and a new model file based on `fever.json` and `
 2. How does limiting the vocabulary size affect the model accuracy?  (hint: adding this to the main section in the config file will limit the vocab size to 10000 tokens. `"vocabulary":{"max_vocab_size":10000}`)
 
 
-### 3. Convolution Pooling Methods
+### 3. Convolution
 Averaging word embeddings is an example of a CBOW model. An alternative way to combine the representations is to use CNNs (see slide 110/111 in Ryan McDonald's talk: [SLIDES](https://github.com/athnlp/athnlp-labs/blob/master/slides/McDonald_classification.pdf)).
 
 1. Use a `CnnEncoder()` ([documentation](https://allenai.github.io/allennlp-docs/api/allennlp.modules.seq2vec_encoders.html#allennlp.modules.seq2vec_encoders.cnn_encoder.CnnEncoder)) to generate convoluted sentence representations. (debugging hint: this method expects the input to be padded. you may get errors if filter size is longer than the sentnece. you will need to set `"token_min_padding_length": 5` or higher in the `tokens` object in `token_indexers` for large filter sizes). Filter sizes of between 2-5 should be sufficient. More filters will cause training to be slower (perhaps just train for 1 or 2 epochs). 
