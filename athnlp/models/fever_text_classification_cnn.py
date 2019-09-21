@@ -2,7 +2,8 @@ from typing import Optional, Dict, List, Any
 
 import allennlp
 import torch
-from allennlp.nn.util import get_text_field_mask, masked_mean
+from allennlp.modules.seq2vec_encoders import CnnEncoder
+from allennlp.nn.util import get_text_field_mask
 from torch import nn
 from torch.nn import functional as F
 from allennlp.data import Vocabulary
@@ -12,7 +13,7 @@ from allennlp.nn import InitializerApplicator, RegularizerApplicator
 from allennlp.training.metrics import CategoricalAccuracy
 
 
-@Model.register("fever")
+@Model.register("fevercnn")
 class FEVERTextClassificationModel(Model):
 
     def __init__(self,
@@ -33,6 +34,7 @@ class FEVERTextClassificationModel(Model):
         self._accuracy = CategoricalAccuracy()
         self._loss = nn.CrossEntropyLoss()
 
+        self._cnn = CnnEncoder(text_field_embedder.get_output_dim(),num_filters=2)
         # Initialize weights
         initializer(self)
 
@@ -78,10 +80,10 @@ class FEVERTextClassificationModel(Model):
         claim_mask = get_text_field_mask(claim).float()
         evidence_mask = get_text_field_mask(evidence).float()
 
-        average_embedded_claim = masked_mean(embedded_claim, mask=claim_mask.unsqueeze(-1), dim=1) # shape ``(batch_size, embedding_dim)`
-        average_embedded_evidence = masked_mean(embedded_evidence, mask=evidence_mask.unsqueeze(-1), dim=1) # shape ``(batch_size, embedding_dim)`
+        encoded_claim = self._cnn(embedded_claim,claim_mask)
+        encoded_evidence = self._cnn(embedded_evidence,evidence_mask)
 
-        concatenated_input = torch.cat([average_embedded_claim, average_embedded_evidence], dim=1) # shape ``(batch_size, embedding_dim*2)`
+        concatenated_input = torch.cat([encoded_claim, encoded_evidence], dim=1) # shape ``(batch_size, embedding_dim*2)`
 
         label_logits = self._feed_forward(concatenated_input)
         label_probs = F.softmax(label_logits, dim=-1)
