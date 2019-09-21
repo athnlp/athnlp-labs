@@ -202,18 +202,21 @@ For the exercises, we have provided a dataset reader (`athnlp/readers/fever_read
 3. Explore: How does fine-tuning the word embeddings affect performance? You can make the word embeddings layer trainable by changing the config file for the `text_field_embedder` in the `fever.json` config file. 
 
 ### 2. Discrete Feature Baseline
-1. Compare against a discrete feature baseline. Instead of embedding claim and evidence we are making an n-hot Bag of Words vector. (Hint: start by make a new config file and a new model file based on `fever.json` and `fever_text_classification.py` config file and edit the type of the `text_field_embedder` be `bag_of_word_counts` - you will have make changes to your model too!).
+Start by make a new config file and a new model file based on `fever.json` and `fever_text_classification.py`. Don't forget  
 
-### 3. Alternative Pooling Methods
-Averaging word embeddings is an example of Pooling (see slide 110/111 in Ryan McDonald's talk: [SLIDES](https://github.com/athnlp/athnlp-labs/blob/master/slides/McDonald_classification.pdf)).
 
-Try alternative methods for pooling the word embeddings. Which ones make an improvement?
- 
-1. Replace the averaging of word embeddings with max pooling (taking the max values for each embedding dimension over each word in the sentence).
+1. Compare against a discrete feature baseline. Instead of embedding claim and evidence we are making an n-hot Bag of Words vector. (Hint: edit the type of the `text_field_embedder` be `bag_of_word_counts` - you will have make changes to your model too!).
 
-2. Use a `CnnEncoder()` to generate sentence representations. (hint: you may need to set `"token_min_padding_length": 5` or higher in the `tokens` object in `token_indexers` for large filter sizes). Filter sizes of between 2-5 should be sufficient. More filters will cause training to be slower (perhaps just train for 1 or 2 epochs)
+2. How does limiting the vocabulary size affect the model accuracy?  (hint: adding this to the main section in the config file will limit the vocab size to 10000 tokens. `"vocabulary":{"max_vocab_size":10000}`)
+
+
+### 3. Convolution Pooling Methods
+Averaging word embeddings is an example of a CBOW model. An alternative way to combine the representations is to use CNNs (see slide 110/111 in Ryan McDonald's talk: [SLIDES](https://github.com/athnlp/athnlp-labs/blob/master/slides/McDonald_classification.pdf)).
+
+1. Use a `CnnEncoder()` ([documentation](https://allenai.github.io/allennlp-docs/api/allennlp.modules.seq2vec_encoders.html#allennlp.modules.seq2vec_encoders.cnn_encoder.CnnEncoder)) to generate convoluted sentence representations. (debugging hint: this method expects the input to be padded. you may get errors if filter size is longer than the sentnece. you will need to set `"token_min_padding_length": 5` or higher in the `tokens` object in `token_indexers` for large filter sizes). Filter sizes of between 2-5 should be sufficient. More filters will cause training to be slower (perhaps just train for 1 or 2 epochs). 
 
 ### 4. Hypothesis-Only NLI and Biases
 1. Implement a _[hypothesis only](https://www.aclweb.org/anthology/S18-2023)_ version of the model that ignores the evidence and only uses the claim for predicting the label. What accuracy does this model get? Why do you think this? Think back to slide 7 on Ryan's talk. 
+
 2. Take a look at the training/dev data. Can you design claims that would "fool" your models? You can see this report ([Thorne and Vlachos, 2019](https://arxiv.org/abs/1903.05543)) for inspiration. 
 What do you conclude about the ability of your model to understand language?
