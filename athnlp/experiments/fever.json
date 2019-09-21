@@ -46,7 +46,8 @@
   "iterator": {
     "type": "bucket",
     "sorting_keys": [["claim", "num_tokens"], ["evidence", "num_tokens"]],
-    "batch_size": 32
+    "batch_size": 32,
+    "instances_per_epoch": 16000
   },
   "trainer": {
     "num_epochs": 20,
