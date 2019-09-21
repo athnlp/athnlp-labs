@@ -202,8 +202,7 @@ For the exercises, we have provided a dataset reader (`athnlp/readers/fever_read
 3. Explore: How does fine-tuning the word embeddings affect performance? You can make the word embeddings layer trainable by changing the config file for the `text_field_embedder` in the `fever.json` config file. 
 
 ### 2. Discrete Feature Baseline
-1. Compare against a discrete feature baseline, i.e., using one-hot vectors or hand-crafted features instead of word embeddings to represent the words? (hint: instead of embedding claim and evidence, make an n-hot vector). 
-
+1. Compare against a discrete feature baseline. Instead of embedding claim and evidence we are making an n-hot Bag of Words vector. (Hint: start by make a new config file and a new model file based on `fever.json` and `fever_text_classification.py` config file and edit the type of the `text_field_embedder` be `bag_of_word_counts` - you will have make changes to your model too!).
 
 ### 3. Alternative Pooling Methods
 Averaging word embeddings is an example of Pooling (see slide 110/111 in Ryan McDonald's talk: [SLIDES](https://github.com/athnlp/athnlp-labs/blob/master/slides/McDonald_classification.pdf)).
