@@ -16,6 +16,24 @@ class RNNModel(nn.Module):
         :param dropout: Dropout value applied to the RNN cell connections
         """
         super(RNNModel, self).__init__()
+        self.drop = nn.Dropout(dropout)
+        self.encoder = nn.Embedding(ntoken, ninp)
+        if rnn_type in ['LSTM', 'GRU']:
+            self.rnn = getattr(nn, rnn_type)(ninp, nhid, nlayers, dropout=dropout)
+        else:
+            try:
+                nonlinearity = {'RNN_TANH': 'tanh', 'RNN_RELU': 'relu'}[rnn_type]
+            except KeyError:
+                raise ValueError("""An invalid option for `--model` was supplied,
+                                         options are ['LSTM', 'GRU', 'RNN_TANH' or 'RNN_RELU']""")
+            self.rnn = nn.RNN(ninp, nhid, nlayers, nonlinearity=nonlinearity, dropout=dropout)
+        self.decoder = nn.Linear(nhid, ntoken)
+
+        self.init_weights()
+
+        self.rnn_type = rnn_type
+        self.nhid = nhid
+        self.nlayers = nlayers
 
     def init_weights(self):
         """
@@ -23,12 +41,17 @@ class RNNModel(nn.Module):
 
         N.B. This is optional because you may want to use the default PyTorch weight initialisation
         """
-        pass
+        initrange = 0.1
+        self.encoder.weight.data.uniform_(-initrange, initrange)
+        self.decoder.bias.data.zero_()
+        self.decoder.weight.data.uniform_(-initrange, initrange)
 
     def forward(self, input, hidden):
         """
-        Forward pass of the RNN language model. You are free to implement it as you wish so we won't provide you with
-        any constraints on the shape of the input tensors.
+        Forward pass of the RNN language model. Useful information about how to use
+        an RNNCell can be found in the PyTorch documentation:
+        https://pytorch.org/docs/stable/nn.html#torch.nn.LSTMCell
+        https://pytorch.org/docs/stable/nn.html#torch.nn.GRUCell
 
         :param input: input features
         :param hidden: previous hidden state of the RNN language model
@@ -44,4 +67,9 @@ class RNNModel(nn.Module):
         :param bsz: batch size
         :return: first hidden state of the RNN language model
         """
-        pass
+        weight = next(self.parameters())
+        if self.rnn_type == 'LSTM':
+            return (weight.new_zeros(self.nlayers, bsz, self.nhid),
+                    weight.new_zeros(self.nlayers, bsz, self.nhid))
+        else:
+            return weight.new_zeros(self.nlayers, bsz, self.nhid)
