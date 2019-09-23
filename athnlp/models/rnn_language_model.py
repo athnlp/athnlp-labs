@@ -50,8 +50,8 @@ class RNNModel(nn.Module):
         """
         Forward pass of the RNN language model. Useful information about how to use
         an RNNCell can be found in the PyTorch documentation:
-        https://pytorch.org/docs/stable/nn.html#torch.nn.LSTMCell
-        https://pytorch.org/docs/stable/nn.html#torch.nn.GRUCell
+        https://pytorch.org/docs/stable/nn.html#torch.nn.LSTM
+        https://pytorch.org/docs/stable/nn.html#torch.nn.GRU
 
         :param input: input features
         :param hidden: previous hidden state of the RNN language model
