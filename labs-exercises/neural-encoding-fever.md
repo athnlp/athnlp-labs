@@ -27,7 +27,7 @@ There are four key parts you'll interact with when developing with the AllenNLP 
 ### Dataset Reader and Sample Data
 Each labeled dataset instance consists of a `claim` sentence accompanied by one or more `evidence` sentences. 
 
-```json
+```
 {    
     'label': 'SUPPORTS',
     'claim': 'Ryan Gosling has been to a country in Africa.',
@@ -120,13 +120,73 @@ class FEVERTextClassificationModel(Model):
  
 ### Running the model
 AllenNLP will install itself as a bash script that you can call when you want to train/evaluate your model using the config specified in your json file. Using the `--include-package` option will load the custom models, dataset readers and other Python modules in that package.
-```bash
-allennlp train --include-package athnlp --serialization-dir mymodel myconfig.json
-``` 
-This is an alias that just runs Python with the following command: `python -m allennlp.run [args]`. 
-If you are using an IDE, you can debug AllenNLP models by running the python module `allennlp.run`. 
-If you are using `pdb`, you will have to write a simple 2-line wrapper script: see `run.py` in the AllenNLP GitHub repo for inspiration. 
 
+```bash
+allennlp train --force --include-package athnlp --serialization-dir mymodel myconfig.json
+``` 
+
+`train` tells AllenNLP to train the model, there are other options for Fine Tuning, Evaluation, Predicting etc.
+`--serialization-dir` defines the location the model will be saved
+`--force` will overwite any existing model saved in the serialization-dir. You could use `--recover` if you wish to continue training a model from a checkpoint.
+`--include-package` will import the Python described package here.
+
+This is an alias that just runs Python with the following command: `python -m allennlp.run [args]`. 
+If you are using an IDE, you can debug AllenNLP models by running the python module `allennlp.run`. **note: this is running a module. not a script - select the dropdown to select "Module name" NOT "Script path"**
+
+![](/data/run_fever.png)
+
+If you are using `pdb`, you will have to write a simple 2-line wrapper script: 
+```
+from allennlp.commands import main 
+main(prog="allennlp”)
+```
+
+### Debugging
+
+#### ConfigurationError
+
+If you encounter this error:
+```
+allennlp.common.checks.ConfigurationError: "feverlite not in acceptable choices for dataset_reader.type: ['ccgbank', 'conll2003', 'conll2000', 'ontonotes_ner', 'coref', 'winobias', 'event2mind', 'interleaving', 'language_modeling', 'multiprocess', 'ptb_trees', 'drop', 'squad', 'quac', 'triviaqa', 'qangaroo', 'srl', 'semantic_dependencies', 'seq2seq', 'sequence_tagging', 'snli', 'universal_dependencies', 'universal_dependencies_multilang', 'sst_tokens', 'quora_paraphrase', 'atis', 'nlvr', 'wikitables', 'template_text2sql', 'grammar_based_text2sql', 'quarel', 'simple_language_modeling', 'babi', 'copynet_seq2seq', 'text_classification_json']"
+```
+Check that `--include-package athnlp` is included in the arguments when calling AllenNLP
+
+
+#### ModuleNotFoundError
+
+If you encounter this error: 
+```
+ModuleNotFoundError: No module named 'athnlp'
+```
+Check that the athnlp folder is in the `PYTHONPATH`. Is your current working directory the `athnlp-labs` folder?
+
+#### FileNotFoundError
+
+```
+FileNotFoundError: file resources/glove.6B.50d.txt.gz not found
+```
+
+Run setup_dependencies.sh to download the file (it will then call `wget https://allennlp.s3.amazonaws.com/datasets/glove/glove.6B.50d.txt.gz -P resources/;`)
+
+
+#### NotImplementedError
+This is where you should add your solution to the exercise! Go and edit `athnlp/models/fever_text_classification.py` and delete this line.
+```
+NotImplementedError: Compute label logits (for supported and refuted) for the given Claim and Evidence input
+```
+
+
+#### It is running all my scripts!
+If you have put your code in the `athnlp`, the `--include-package` function will try and find code to import. You should change the code from previous labs and wrap it in the following if statement `if __name__ == "__main__":` so that it only runs when it is your main python script.  
+
+### Self-Help
+There are a large number of (more complex) models already available for AllenNLP which could help inspire you when you write your model: Check out the [models package](https://github.com/allenai/allennlp/tree/master/allennlp/models) on GitHub for inspiration if you are stuck. 
+
+If you are getting errors about size mismatch (`RuntimeError: size mismatch, m1: [32 x 100], m2: [256 x 100]`) check the dimensions of your MLP are compatible. This error is caused when PyTorch tries to multiply incompatible matrices. Check that the input dimension for the MLP in the config file is the same size as the input representation you generate. Use the debugger to inspect this or print the shape of your variables `print(my_variable.shape)`. 
+
+
+### Using GPU
+If your laptop has a CUDA-enabled GPU and you have the appropriate drivers installed, you can speed up training by setting `"cuda_device":0` in your configuration file. 
 
 ## Exercises
 For the exercises, we have provided a dataset reader (`athnlp/readers/fever_reader.py`), configuration file (`athnlp/experiments/fever.json`), and sample model (`athnlp/models/fever_text_classification.py`). You can complete these exercises by completing the code in the sample model.
@@ -142,18 +202,21 @@ For the exercises, we have provided a dataset reader (`athnlp/readers/fever_read
 3. Explore: How does fine-tuning the word embeddings affect performance? You can make the word embeddings layer trainable by changing the config file for the `text_field_embedder` in the `fever.json` config file. 
 
 ### 2. Discrete Feature Baseline
-1. Compare against a discrete feature baseline, i.e., using one-hot vectors or hand-crafted features instead of word embeddings to represent the words?
+Start by make a new config file and a new model file based on `fever.json` and `fever_text_classification.py`. Don't forget  
 
-### 3. Alternative Pooling Methods
-Averaging word embeddings is an example of Pooling (see slide 110/111 in Ryan McDonald's talk: [SLIDES](https://github.com/athnlp/athnlp-labs/blob/master/slides/McDonald_classification.pdf)).
 
-Try alternative methods for pooling the word embeddings. Which ones make an improvement?
- 
-1. Replace the averaging of word embeddings with max pooling (taking the max values for each embedding dimension over each word in the sentence).
+1. Compare against a discrete feature baseline. Instead of embedding claim and evidence we are making an n-hot Bag of Words vector. (Hint: edit the type of the `text_field_embedder` be `bag_of_word_counts` - you will have make changes to your model too!).
 
-2. Use a `CnnEncoder()` to generate sentence representations. (hint: you may need to set `"token_min_padding_length": 5` or higher in the `tokens` object in `token_indexers` for large filter sizes). Filter sizes of between 2-5 should be sufficient. More filters will cause training to be slower (perhaps just train for 1 or 2 epochs)
+2. How does limiting the vocabulary size affect the model accuracy?  (hint: adding this to the main section in the config file will limit the vocab size to 10000 tokens. `"vocabulary":{"max_vocab_size":10000}`)
+
+
+### 3. Convolution
+Averaging word embeddings is an example of a CBOW model. An alternative way to combine the representations is to use CNNs (see slide 110/111 in Ryan McDonald's talk: [SLIDES](https://github.com/athnlp/athnlp-labs/blob/master/slides/McDonald_classification.pdf)).
+
+1. Use a `CnnEncoder()` ([documentation](https://allenai.github.io/allennlp-docs/api/allennlp.modules.seq2vec_encoders.html#allennlp.modules.seq2vec_encoders.cnn_encoder.CnnEncoder)) to generate convoluted sentence representations. (debugging hint: this method expects the input to be padded. you may get errors if filter size is longer than the sentnece. you will need to set `"token_min_padding_length": 5` or higher in the `tokens` object in `token_indexers` for large filter sizes). Filter sizes of between 2-5 should be sufficient. More filters will cause training to be slower (perhaps just train for 1 or 2 epochs). 
 
 ### 4. Hypothesis-Only NLI and Biases
 1. Implement a _[hypothesis only](https://www.aclweb.org/anthology/S18-2023)_ version of the model that ignores the evidence and only uses the claim for predicting the label. What accuracy does this model get? Why do you think this? Think back to slide 7 on Ryan's talk. 
+
 2. Take a look at the training/dev data. Can you design claims that would "fool" your models? You can see this report ([Thorne and Vlachos, 2019](https://arxiv.org/abs/1903.05543)) for inspiration. 
 What do you conclude about the ability of your model to understand language?
