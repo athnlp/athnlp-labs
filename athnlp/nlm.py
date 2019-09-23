@@ -152,6 +152,7 @@ def train(model, criterion, corpus, train_data, lr, bptt, epoch):
         # TODO: compute loss using the defined criterion obtaining 'loss'.
         loss = None
         # TODO: compute backpropagation calling the backward pass
+        # N.B.: Here you should also update your model's weights
 
         # TODO (optional): implement gradient clipping to prevent
         # the exploding gradient problem in RNNs / LSTMs
@@ -202,6 +203,9 @@ def main(args):
         # TODO: model definition and loss definition
         model = None
         criterion = None
+        # In order to optimise your model weights you have two options:
+        # 1. Write the SGD update rule that uses the computed gradients to update the model's weights
+        # 2. Use a PyTorch optimiser that computes the update step (https://pytorch.org/docs/stable/optim.html)
 
         # Loop over epochs.
         lr = args.lr
