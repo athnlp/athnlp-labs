@@ -18,8 +18,8 @@
       }
     }
   },
-  "train_data_path": "data/multi30k/val.lc.norm.tok.head-5",
-  "validation_data_path": "data/multi30k/val.lc.norm.tok.head-5",
+  "train_data_path": "data/multi30k/val.lc.norm.tok.head-750",
+  "validation_data_path": "data/multi30k/val.lc.norm.tok.head-250",
   "model": {
     "type": "nmt_seq2seq",
     "source_embedder": {
