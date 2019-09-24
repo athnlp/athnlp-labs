@@ -38,8 +38,8 @@ class Multi30kReader(DatasetReader):
     @overrides
     def _read(self, file_path):
 
-        with open(cached_path(("%s.%s" % (file_path, self._language_pairs["source"]))), "r") as source_file, \
-                open(cached_path(("%s.%s" % (file_path, self._language_pairs["target"]))), "r") as target_file:
+        with open(cached_path(("%s.%s" % (file_path, self._language_pairs["source"]))), "r", encoding="utf8") as source_file, \
+                open(cached_path(("%s.%s" % (file_path, self._language_pairs["target"]))), "r", encoding="utf8") as target_file:
             logger.info("Reading instances from lines in source/target files at: %s", file_path)
             for source_sequence, target_sequence in zip(source_file, target_file):
                 yield self.text_to_instance(source_sequence, target_sequence)
