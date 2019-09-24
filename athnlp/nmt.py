@@ -23,7 +23,7 @@ if __name__ == "__main__":
         sys.argv = [
             "allennlp",  # command name, not used by main
             "predict",
-            "--predictor", "nmt_seq2seq",
+            "--predictor", "seq2seq",
             "--include-package", "athnlp",
             "-o", overrides,
             serialization_dir,
