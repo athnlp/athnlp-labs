@@ -3,6 +3,7 @@ from argparse import ArgumentParser
 import json
 import shutil
 import sys
+from athnlp.predictors.nmt_seq2seq import NmTSeq2SeqPredictor
 
 from allennlp.commands import main
 
@@ -18,7 +19,7 @@ if __name__ == "__main__":
     serialization_dir = args.model_path
 
     if args.predict:
-        overrides = json.dumps({"model": {"visualize_attention": "false"}})
+        overrides = json.dumps({"model": {"visualize_attention": "true"}})
 
         sys.argv = [
             "allennlp",  # command name, not used by main

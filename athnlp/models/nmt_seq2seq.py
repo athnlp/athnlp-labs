@@ -110,6 +110,7 @@ class NmtSeq2Seq(Model):
         # Attention mechanism params applied to the encoder output for each step.
         self._attention = attention
 
+        #TODO: Complete in lab
         self._visualize_attention = visualize_attention
 
         # Dense embedding of vocab words in the target space.
@@ -175,7 +176,8 @@ class NmtSeq2Seq(Model):
             for each source sentence in the batch.
         """
         # shape: (group_size, num_classes)
-        output_projections, state = self._prepare_output_projections(last_predictions, state)
+        # TODO: Complete in lab
+        output_projections, state, _ = self._prepare_output_projections(last_predictions, state)
 
         # shape: (group_size, num_classes)
         class_log_probabilities = F.log_softmax(output_projections, dim=-1)
@@ -215,6 +217,7 @@ class NmtSeq2Seq(Model):
 
         if not self.training:
             state = self._init_decoder_state(state)
+            # TODO: Complete in lab
             if self._visualize_attention:
                 output_dict = self._forward_loop(state, target_tokens)
             else:
@@ -320,7 +323,8 @@ class NmtSeq2Seq(Model):
 
         step_logits: List[torch.Tensor] = []
         step_predictions: List[torch.Tensor] = []
-
+        # TODO: Complete in lab
+        step_attentions: List[torch.Tensor] = []
         for timestep in range(num_decoding_steps):
             if self.training and torch.rand(1).item() < self._scheduled_sampling_ratio:
                 # Use gold tokens at test time and at a rate of 1 - _scheduled_sampling_ratio
@@ -335,7 +339,8 @@ class NmtSeq2Seq(Model):
                 input_choices = targets[:, timestep]
 
             # shape: (batch_size, num_classes)
-            output_projections, state = self._prepare_output_projections(input_choices, state)
+            # TODO: Complete in lab
+            output_projections, state, attention_scores = self._prepare_output_projections(input_choices, state)
 
             # list of tensors, shape: (batch_size, 1, num_classes)
             step_logits.append(output_projections.unsqueeze(1))
@@ -351,10 +356,17 @@ class NmtSeq2Seq(Model):
 
             step_predictions.append(last_predictions.unsqueeze(1))
 
+            step_attentions.append(attention_scores.unsqueeze(0))
+
         # shape: (batch_size, num_decoding_steps)
         predictions = torch.cat(step_predictions, 1)
 
-        output_dict = {"predictions": predictions}
+        # TODO: Complete in lab
+        # shape: (batch_size, max_input_sequence_length, num_decoding_steps)
+        attentions = torch.cat(step_attentions, 0).transpose(0, 1)
+
+        # TODO: Complete in lab
+        output_dict = {"predictions": predictions, "attentions": attentions}
 
         if target_tokens:
             # shape: (batch_size, num_decoding_steps, num_classes)
@@ -409,7 +421,16 @@ class NmtSeq2Seq(Model):
         embedded_input = self._target_embedder(last_predictions)
 
         # TODO: Compute attention right about here...
-        decoder_input = embedded_input
+        attention_scores = None
+        if self._attention:
+            # shape: (group_size, encoder_output_dim)
+            attended_input, attention_scores = self._compute_attention(decoder_hidden, encoder_outputs, source_mask)
+
+            # shape: (group_size, decoder_output_dim + target_embedding_dim)
+            decoder_input = torch.cat((attended_input, embedded_input), -1)
+        else:
+            # shape: (group_size, target_embedding_dim)
+            decoder_input = embedded_input
 
         # shape (decoder_hidden): (batch_size, decoder_output_dim)
         # shape (decoder_context): (batch_size, decoder_output_dim)
@@ -423,7 +444,8 @@ class NmtSeq2Seq(Model):
         # shape: (group_size, num_classes)
         output_projections = self._output_projection_layer(decoder_hidden)
 
-        return output_projections, state
+        # TODO: Complete in lab
+        return output_projections, state, attention_scores
 
     # TODO: Implement attention mechanisms here
     def _compute_attention(self,
@@ -462,8 +484,19 @@ class NmtSeq2Seq(Model):
         encoder_outputs_mask = encoder_outputs_mask.float()
 
         # Main body of attention weights computation here
+        if self._attention["type"] == "dot_product":
+            attention_scores = encoder_outputs.bmm(decoder_hidden_state.unsqueeze(-1)).squeeze(-1)
+            # shape: (batch_size, input_sequence_length)
+            masked_attention_scores = masked_softmax(attention_scores, encoder_outputs_mask)
+        else:
+            raise ValueError("Attention of type {} not supported yet!".format(self._attention["type"]))
 
-        return None
+        # Apply the attention weights on the encoder outputs
+        # shape: (batch_size, encoder_output_dim)
+        attended_input = util.weighted_sum(encoder_outputs, masked_attention_scores)
+        # attended_input = util.weighted_sum(encoder_outputs, input_weights)
+
+        return attended_input, masked_attention_scores
 
     @staticmethod
     def _get_loss(logits: torch.LongTensor,
