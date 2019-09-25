@@ -67,6 +67,7 @@ in ``athnlp/predictors/nmt_seq2seq.py`` for you that already prints out heatmaps
 scores from your model in ``forward_loop()``. You can execute it via ``athnlp/nmt.py``. 
  Then visualize attention scores between the input and predicted output for the examples 
  found in ``data/multi30k/val.lc.norm.tok.head-5.fr.jsonl``. What do you observe?
+ - **NEW**: We have trained a model n the full training set of Multi30k found [here](https://drive.google.com/open?id=1lZFKb1Tf_0Hxuf9Hti6HfJoQ3oAD1PZd). Use this to predict and visualise attention weights. How much different are they to what you trained?
   
 - (Bonus) Instead of concatenating the context vector with the previous predicted word embedding *before* being 
 feeding as in input to the decoder RNN, try concatenating it to the output hidden state of the decoder 
