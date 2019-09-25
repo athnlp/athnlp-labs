@@ -100,13 +100,13 @@ should follow. We define details of required inputs and ouputs as follows:
   
 An output dictionary consisting of:
 - logits : torch.FloatTensor
-    A tensor of shape ``(batch_size, num_labels)`` representing
+    A tensor of shape ``(batch_size, num_tokens)`` representing
     unnormalized log probabilities of the label.
 - start_probs : torch.FloatTensor
-    A tensor of shape ``(batch_size, num_labels)`` representing
+    A tensor of shape ``(batch_size, num_tokens)`` representing
     probabilities of the label obtained applying softmax on the predicted logits.
 - end_probs : torch.FloatTensor
-    A tensor of shape ``(batch_size, num_labels)`` representing
+    A tensor of shape ``(batch_size, num_tokens)`` representing
     probabilities of the label obtained applying softmax on the predicted logits.
 - best_span: torch.LongTensor
     A tensor of shape ``(batch_size, 2)`` representing the predicted start and end position for the answer
