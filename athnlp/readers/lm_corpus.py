@@ -1,3 +1,5 @@
+# This code has been adapted from: https://github.com/pytorch/examples/blob/master/word_language_model/data.py
+
 import os
 from io import open
 
