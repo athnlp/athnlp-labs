@@ -52,6 +52,19 @@ class BertQuestionAnswering(Model):
                  regularizer: Optional[RegularizerApplicator] = None, ) -> None:
         super().__init__(vocab, regularizer)
 
+        self._index = index
+        self.bert_model = PretrainedBertModel.load(bert_model)
+        hidden_size = self.bert_model.config.hidden_size
+
+        for param in self.bert_model.parameters():
+            param.requires_grad = trainable
+
+        # 1. Instantiate any additional parts of your network
+
+        # 2. DON'T FORGET TO INITIALIZE the additional parts of your network.
+
+        # 3. Instantiate your metrics
+
     def forward(self,  # type: ignore
                 metadata: Dict,
                 tokens: Dict[str, torch.LongTensor],
@@ -91,7 +104,26 @@ class BertQuestionAnswering(Model):
         input_ids = tokens[self._index]
         token_type_ids = tokens[f"{self._index}-type-ids"]
         input_mask = (input_ids != 0).long()
-        pass
+
+        # 1. Build model here
+
+        # 2. Compute start_position and end_position and then get the best span
+        # using allennlp.models.reading_comprehension.util.get_best_span()
+
+        output_dict = {}
+
+        # 4. Compute loss and accuracies. You should compute at least:
+        # span_start accuracy, span_end accuracy and full span accuracy.
+
+        # UNCOMMENT THIS LINE
+        # output_dict["loss"] =
+
+        # 5. Optionally you can compute the official squad metrics (exact match, f1).
+        # Instantiate the metric object in __init__ using allennlp.training.metrics.SquadEmAndF1()
+        # When you call it, you need to give it the word tokens of the span (implement and call decode() below)
+        # and the gold tokens found in metadata[i]['answer_texts']
+
+        return output_dict
 
     @overrides
     def decode(self, output_dict: Dict[str, torch.Tensor]) -> Dict[str, torch.Tensor]:
@@ -102,14 +134,15 @@ class BertQuestionAnswering(Model):
         pass
 
     def get_metrics(self, reset: bool = False) -> Dict[str, float]:
-        exact_match, f1_score = self._squad_metrics.get_metric(reset)
+        # UNCOMMENT if you want to report official SQuAD metrics
+        # exact_match, f1_score = self._squad_metrics.get_metric(reset)
 
         metrics = {
             'start_acc': self._span_start_accuracy.get_metric(reset),
             'end_acc': self._span_end_accuracy.get_metric(reset),
             'span_acc': self._span_accuracy.get_metric(reset),
-            'em': exact_match,
-            'f1': f1_score,
+            # 'em': exact_match,
+            # 'f1': f1_score,
         }
         return metrics
 
