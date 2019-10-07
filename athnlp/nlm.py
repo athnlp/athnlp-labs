@@ -1,4 +1,5 @@
 # coding: utf-8
+# This code has been adapted from: https://github.com/pytorch/examples/blob/master/word_language_model/main.py
 import argparse
 import copy
 import math
@@ -6,6 +7,7 @@ import time
 
 import torch
 import torch.nn as nn
+from torch.optim import SGD
 
 from athnlp.models.rnn_language_model import RNNModel
 from athnlp.readers.lm_corpus import Corpus
@@ -55,7 +57,6 @@ parser.add_argument("--sentence_compl", action='store_true')
 # These columns are treated as independent by the model, which means that the
 # dependence of e. g. 'g' on 'f' can not be learned, but allows more efficient
 # batch processing.
-
 def batchify(data, batch_size, device):
     # Work out how cleanly we can divide the dataset into bsz parts.
     num_batches = data.size(0) // batch_size
@@ -97,6 +98,16 @@ def get_batch(source, i, bptt):
 
 
 def evaluate(model, criterion, eval_batch_size, corpus, data_source):
+    """
+    Evaluates the performance of the model according to the specified criterion  on the provided data source
+
+    :param model: RNN language model
+    :param criterion: criterion to be evaluated
+    :param eval_batch_size: batch size (you can assume 1 for simplicity)
+    :param corpus: instance of the reference corpus
+    :param data_source: reference data for evaluation
+    :return: the average score evaluated using the specified criterion
+    """
     # Turn on evaluation mode which disables dropout.
     model.eval()
     total_loss = 0.
@@ -108,11 +119,28 @@ def evaluate(model, criterion, eval_batch_size, corpus, data_source):
             output, hidden = model(data, hidden)
             hidden = repackage_hidden(hidden)
             output_flat = output.view(-1, ntokens)
+            # We multiply by the number of examples in the batch in order
+            # to get the total loss and not the average (which is what
+            # by default PyTorch Cross-entropy loss is doing behind
+            # the scenes for us)
             total_loss += len(data) * criterion(output_flat, targets).item()
     return total_loss / (len(data_source) - 1)
 
 
-def train(model, criterion, corpus, train_data, lr, bptt, epoch):
+def train(model, criterion, optimiser, corpus, train_data, lr, bptt, epoch):
+    """
+    Trains the specified language model by minimising the provided criterion using as the training data. It trains the
+    model for a given number of epoch with a fixed learning rate.
+
+    :param model: RNN language model
+    :param criterion: LM loss function
+    :param corpus: Reference corpus
+    :param train_data: training data for the LM task
+    :param lr: SGD learning rate
+    :param bptt: Sequence length
+    :param epoch: Number of training epochs
+    :return: Average training loss
+    """
     # Turn on training mode which enables dropout.
     model.train()
     total_loss = 0.
@@ -131,8 +159,8 @@ def train(model, criterion, corpus, train_data, lr, bptt, epoch):
 
         # `clip_grad_norm` helps prevent the exploding gradient problem in RNNs / LSTMs.
         torch.nn.utils.clip_grad_norm_(model.parameters(), args.clip)
-        for p in model.parameters():
-            p.data.add_(-lr, p.grad.data)
+        # we use the optimiser to update the model parameters
+        optimiser.step()
 
         total_loss += loss.item()
 
@@ -174,6 +202,9 @@ def main(args):
     # Trains the model and then runs the evaluation on the test set
     if not args.sentence_compl:
         eval_batch_size = 1
+        ###############################################################################
+        # Load your train, valid and test data
+        ###############################################################################
         train_data = batchify(corpus.train, args.batch_size, device)
         val_data = batchify(corpus.valid, eval_batch_size, device)
         test_data = batchify(corpus.test, eval_batch_size, device)
@@ -185,7 +216,7 @@ def main(args):
         ntokens = len(corpus.dictionary)
         model = RNNModel(args.model_type, ntokens, args.emsize, args.nhid, args.nlayers, args.dropout).to(
             device)
-
+        optimiser = SGD(model.parameters(), lr=args.lr)
         criterion = nn.CrossEntropyLoss()
 
         # Loop over epochs.
@@ -196,7 +227,7 @@ def main(args):
         try:
             for epoch in range(1, args.epochs + 1):
                 epoch_start_time = time.time()
-                train(model, criterion, corpus, train_data, lr, args.bptt, epoch)
+                train(model, criterion, optimiser, corpus, train_data, lr, args.bptt, epoch)
                 val_loss = evaluate(model, criterion, eval_batch_size, corpus, val_data)
                 print('-' * 89)
                 print('| end of epoch {:3d} | time: {:5.2f}s | valid loss {:5.2f} | '
@@ -239,10 +270,58 @@ def main(args):
             # this makes them a continuous chunk, and will speed up forward pass
             model.rnn.flatten_parameters()
 
-        ###############################################################################
-        # Use the pretrained LM at inference time
-        ###############################################################################
-        # TODO: Sentence completion solution
+        # Sentence: The ______ solved the open problem .
+        orig_sentence = [
+            corpus.dictionary.word2idx["the"],
+            None,
+            corpus.dictionary.word2idx["stole"],
+            corpus.dictionary.word2idx["the"],
+            corpus.dictionary.word2idx["suitcase"],
+            corpus.dictionary.word2idx["."]
+        ]
+
+        dataset = []
+        # we create a dataset containing variants of the sentence to be completed
+
+        for new_word in corpus.dictionary.word2idx.keys():
+            if new_word != "<eos>":
+                sentence = copy.copy(orig_sentence)
+                sentence[1] = corpus.dictionary.word2idx[new_word]
+                dataset.append(torch.LongTensor(sentence).unsqueeze(0))
+
+        # now we generate the log probability of every sentence and rank them
+        dataset = torch.cat(dataset, 0)
+
+        data_source = dataset.transpose(1, 0)
+        model.eval()
+        num_sentences = data_source.shape[1]
+        hidden = model.init_hidden(num_sentences)
+
+        sentence_likelihood = []
+
+        with torch.no_grad():
+
+            for i in range(0, len(orig_sentence) - 1):
+                batch = data_source[:i + 1, :]
+                targets = data_source[i + 1, :]
+                logits, hidden = model(batch, hidden)
+                logits = logits[-1]
+                sampled_logits = index2d_by_column(logits, targets)
+                sentence_likelihood.append(sampled_logits.unsqueeze(-1))
+
+            sentence_likelihood = torch.cat(sentence_likelihood, -1)
+
+            sentence_scores = sentence_likelihood.sum(-1)
+
+            top_idx = torch.argsort(sentence_scores, descending=True)
+
+            sorted_dataset = dataset[top_idx, :]
+
+            print("Top candidates")
+            for i, sentence_idx in enumerate(sorted_dataset):
+                sentence = " ".join(corpus.dictionary.idx2word[idx] for idx in sentence_idx)
+
+                print("#{} sentence - {} - Score: {}".format(i + 1, sentence, sentence_scores[top_idx[i]]))
 
 
 if __name__ == "__main__":

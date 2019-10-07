@@ -46,6 +46,7 @@
     },
     "decoder": {
       "type": "lstm",
+// change this to 450 if using attention
       "input_size": 50,
       "hidden_size": 400
     },
