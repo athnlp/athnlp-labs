@@ -3,8 +3,11 @@ from typing import Dict, Optional
 import torch
 from allennlp.data.vocabulary import Vocabulary
 from allennlp.models.model import Model
+from allennlp.models.reading_comprehension.util import get_best_span
 from allennlp.nn import RegularizerApplicator
 from allennlp.nn.initializers import InitializerApplicator
+from allennlp.nn.util import masked_softmax
+from allennlp.training.metrics import BooleanAccuracy, CategoricalAccuracy, SquadEmAndF1
 from overrides import overrides
 from pytorch_transformers.modeling_bert import BertModel
 
@@ -51,10 +54,25 @@ class BertQuestionAnswering(Model):
                  initializer: InitializerApplicator = InitializerApplicator(),
                  regularizer: Optional[RegularizerApplicator] = None, ) -> None:
         super().__init__(vocab, regularizer)
-
         self._index = index
         self.bert_model = PretrainedBertModel.load(bert_model)
         hidden_size = self.bert_model.config.hidden_size
+
+        ###
+        # TODO: check if trainable
+        for param in self.bert_model.parameters():
+            param.requires_grad = trainable
+
+        self._dropout = torch.nn.Dropout(p=dropout)
+
+        self._final_layer = torch.nn.Linear(hidden_size, 2)
+
+        self._span_start_accuracy = CategoricalAccuracy()
+        self._span_end_accuracy = CategoricalAccuracy()
+        self._span_accuracy = BooleanAccuracy()
+        self._squad_metrics = SquadEmAndF1()
+        ###
+        initializer(self._final_layer)
 
     def forward(self,  # type: ignore
                 metadata: Dict,
@@ -95,25 +113,78 @@ class BertQuestionAnswering(Model):
         input_ids = tokens[self._index]
         token_type_ids = tokens[f"{self._index}-type-ids"]
         input_mask = (input_ids != 0).long()
-        
-        # 1. Build model here
 
+        """
+        Outputs will be a tuple containing:
+        **last_hidden_state**: ``torch.FloatTensor`` of shape ``(batch_size, sequence_length, hidden_size)``
+            Sequence of hidden-states at the output of the last layer of the model.
+        **pooler_output**: ``torch.FloatTensor`` of shape ``(batch_size, hidden_size)``
+            Last layer hidden-state of the first token of the sequence (classification token)
+            further processed by a Linear layer and a Tanh activation function. 
+        **attentions**: (`optional`, returned when ``config.output_attentions=True``)
+            list of ``torch.FloatTensor`` (one for each layer) of shape ``(batch_size, num_heads, sequence_length, sequence_length)``:
+            Attentions weights after the attention softmax, used to compute the weighted average in the self-attention heads.
+        """
+        outputs = self.bert_model(input_ids=input_ids,
+                                  token_type_ids=token_type_ids,
+                                  attention_mask=input_mask)
 
-        # 2. Compute start_position and end_position and then get the best span
-        # using allennlp.models.reading_comprehension.util.get_best_span()
+        last_layer_output = outputs[0]
 
-        output_dict = {}
+        # apply linear layer for every wordpiece token
+        logits = self._final_layer(self._dropout(last_layer_output))
 
-        # 4. Compute loss and accuracies. You should compute at least:
-        # span_start accuracy, span_end accuracy and full span accuracy.
+        # (batch_size, max_sequence_length, 1)
+        start_logits, end_logits = logits.split(1, dim=-1)
+        start_logits = start_logits.squeeze(-1)
+        end_logits = end_logits.squeeze(-1)
 
-        # UNCOMMENT THIS LINE
-        # output_dict["loss"] =
+        question_mask = token_type_ids.clone().float().log() + 1
+        # In SQUAD 2.0 there are "impossible questions" 
+        # To deal with this, wee need to allow the probability mass to be on the [CLS] token
+        # This unmasks [CLS], which is always the first token in the input
+        question_mask[:, 0] = 1
+        start_probs = masked_softmax(start_logits, mask=question_mask, dim=-1)
+        end_probs = masked_softmax(end_logits, mask=question_mask, dim=-1)
+        best_span = get_best_span(start_probs, end_probs)
 
-        # 5. Optionally you can compute the official squad metrics (exact match, f1).
-        # Instantiate the metric object in __init__ using allennlp.training.metrics.SquadEmAndF1()
-        # When you call it, you need to give it the word tokens of the span (implement and call decode() below)
-        # and the gold tokens found in metadata[i]['answer_texts']
+        output_dict = {
+            "start_logits": start_logits,
+            "end_logits": end_logits,
+            "start_probs": start_probs,
+            "end_probs": end_probs,
+            "best_span": best_span,
+            "passage_question_attention": outputs[-1]
+        }
+
+        if span_start is not None:
+            # sometimes the start/end positions are outside our model inputs, we ignore these terms
+            ignored_index = start_logits.size(1)
+            span_start.clamp_(0, ignored_index)
+            span_end.clamp_(0, ignored_index)
+
+            loss = torch.nn.CrossEntropyLoss(ignore_index=ignored_index)
+            start_loss = loss(start_logits, span_start.squeeze(-1))
+            end_loss = loss(end_logits, span_end.squeeze(-1))
+            self._span_start_accuracy(start_logits, span_start.squeeze(-1))
+            self._span_end_accuracy(end_logits, span_end.squeeze(-1))
+            self._span_accuracy(best_span, torch.cat([span_start, span_end], -1))
+            output_dict["loss"] = (start_loss + end_loss) / 2
+
+            # TODO: double-check this
+            if metadata is not None:
+                batch_size = end_logits.shape[0]
+                output_dict["metadata"] = metadata
+                output_dict["tokens"] = tokens
+                output_dict = self.decode(output_dict)
+
+                for i in range(batch_size):
+                    best_span_string = output_dict['best_span_str'][i]
+                    answer_texts = metadata[i].get('answer_texts', ["[CLS]"])
+                    if answer_texts:
+                        self._squad_metrics(best_span_string, answer_texts)
+                    print("pred: " + best_span_string + " gold:" + str(answer_texts))
+                #######
 
         return output_dict
 
@@ -123,18 +194,46 @@ class BertQuestionAnswering(Model):
         Does a simple argmax over the probabilities, converts index to string label, and
         add ``"label"`` key to the dictionary with the result.
         """
-        pass
+        best_span_str = []
+        batch_size = output_dict["start_probs"].shape[0]
+        best_spans = output_dict["best_span"]
+        tokens = output_dict["tokens"]
+
+        for i in range(batch_size):
+            predicted_span = tuple(best_spans[i].detach().cpu().numpy())
+            start_span = predicted_span[0]
+            end_span = predicted_span[1]
+            pred_answer_tokens = [self.vocab._index_to_token["bert"][token] for token in tokens["bert"][i].tolist()][
+                                 start_span: end_span + 1]
+            # start_offset = offsets[predicted_span[0]][0]
+            # end_offset = offsets[predicted_span[1]][1]
+            # best_span_string = passage_str[start_offset:end_offset]
+            best_span_str.append(self.wordpiece_to_tokens(pred_answer_tokens))
+        output_dict['best_span_str'] = best_span_str
+
+        return output_dict
+
+    @staticmethod
+    def wordpiece_to_tokens(wordpiece_tokens):
+        buffer = ""
+
+        for w_token in wordpiece_tokens:
+            if "##" not in w_token:
+                buffer += " " + w_token
+            else:
+                buffer += w_token.replace("##", "")
+
+        return buffer.strip()
 
     def get_metrics(self, reset: bool = False) -> Dict[str, float]:
-        # UNCOMMENT if you want to report official SQuAD metrics
-        # exact_match, f1_score = self._squad_metrics.get_metric(reset)
+        exact_match, f1_score = self._squad_metrics.get_metric(reset)
 
         metrics = {
             'start_acc': self._span_start_accuracy.get_metric(reset),
             'end_acc': self._span_end_accuracy.get_metric(reset),
             'span_acc': self._span_accuracy.get_metric(reset),
-            # 'em': exact_match,
-            # 'f1': f1_score,
+            'em': exact_match,
+            'f1': f1_score,
         }
         return metrics
 
